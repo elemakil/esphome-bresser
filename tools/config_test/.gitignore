@@ -1,0 +1,3 @@
+# Scratch config directory run.sh assembles per run: a copy of components/ plus a
+# generated config-test.yaml. Regenerated every invocation; not committed.
+work/

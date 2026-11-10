@@ -1,0 +1,38 @@
+# All three platforms describing one device (and two id-less blocks of one model, which are
+# the same device), plus every field of another model.
+sensor:
+  - platform: bresser
+    model: bresser_8in1
+    temperature:
+      name: "Temperature"
+    globe_temperature:
+      name: "Globe Temperature"
+  - platform: bresser
+    model: bresser_8in1
+    humidity:
+      name: "Humidity"
+  - platform: bresser
+    model: bresser_hchovoc
+    channel:
+      name: "HCHO Channel"
+    hcho:
+      name: "HCHO"
+    voc_level:
+      name: "VOC"
+    rssi:
+      name: "HCHO Signal"
+binary_sensor:
+  - platform: bresser
+    model: bresser_8in1
+    battery_low:
+      name: "Battery"
+    startup:
+      name: "Startup"
+    online:
+      name: "Online"
+      timeout: 5min
+text_sensor:
+  - platform: bresser
+    model: bresser_8in1
+    last_seen:
+      name: "Last Seen"

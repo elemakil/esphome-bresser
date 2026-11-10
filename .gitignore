@@ -1,22 +1,23 @@
-# Secrets — never commit
+# Secrets: never commit
 secrets.yaml
 
-# ESPHome build output
+# ESPHome / PlatformIO build output
 .esphome/
+.pio/
 *.bin
 *.elf
 *.map
 
-# PlatformIO
-.pio/
-.pioenvs/
-.piolibdeps/
+# Scratch output of tools/ and tests/
+build/
+tools/config_test/work/
 
 # Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+.ruff_cache/
 
 # Editors / OS
 .vscode/
@@ -24,6 +25,3 @@ venv/
 *.swp
 .DS_Store
 Thumbs.db
-desktop.ini
-
-.ruff_cache/

@@ -1,0 +1,9 @@
+# The receiver-level unknown_devices entity, in a block of its own.
+text_sensor:
+  - platform: bresser
+    unknown_devices:
+      name: "Unknown Bresser devices"
+  - platform: bresser
+    model: bresser_co2
+    last_seen:
+      name: "CO2 Last Seen"

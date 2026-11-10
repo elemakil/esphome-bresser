@@ -1,0 +1,13 @@
+# expect: some 'bresser_7in1' blocks set sensor_id and some do not
+# The id-less block would also receive station 12345's frames.
+sensor:
+  - platform: bresser
+    model: bresser_7in1
+    sensor_id: 12345
+    temperature:
+      name: "Temperature"
+binary_sensor:
+  - platform: bresser
+    model: bresser_7in1
+    battery_low:
+      name: "Battery"

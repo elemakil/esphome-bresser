@@ -1,0 +1,7 @@
+# expect: value must be at most 24d
+binary_sensor:
+  - platform: bresser
+    model: bresser_7in1
+    online:
+      name: "Online"
+      timeout: 60d

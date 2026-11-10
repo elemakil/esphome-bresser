@@ -1,0 +1,8 @@
+# expect: value must be at most 65535
+# Sensor ids are 16 bits.
+sensor:
+  - platform: bresser
+    model: bresser_7in1
+    sensor_id: 65536
+    temperature:
+      name: "Temperature"
