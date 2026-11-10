@@ -279,3 +279,9 @@ The decoder is a C++ port of [rtl_433](https://github.com/merbanan/rtl_433)'s
 Thanks to them for working out this protocol, and to
 [BresserWeatherSensorReceiver](https://github.com/matthias-bs/BresserWeatherSensorReceiver)
 for the radio settings.
+
+## AI assistance
+
+This component was developed with the help of AI coding assistants, under human direction
+and review. The decoder is checked against rtl_433's output on 1556 test frames, and every
+change goes through the same tests and CI builds as hand-written code.
