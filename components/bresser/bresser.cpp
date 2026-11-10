@@ -51,6 +51,8 @@ void BresserDevice::publish(const Reading &r, uint32_t now) {
     this->channel_sensor_->publish_state(r.channel);
   if (this->rssi_sensor_ != nullptr)
     this->rssi_sensor_->publish_state(r.rssi);
+  if (this->transmitter_id_sensor_ != nullptr)
+    this->transmitter_id_sensor_->publish_state(r.id);
   // device_class battery: ON means the battery is low.
   if (this->battery_sensor_ != nullptr)
     this->battery_sensor_->publish_state(!r.battery_ok);

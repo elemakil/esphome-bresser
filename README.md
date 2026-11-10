@@ -19,8 +19,8 @@ listed, so you can find their ids.
 | CO₂ (PN 7009977) | `bresser_co2` | `co2`, `channel` |
 | HCHO/VOC (PN 7009978) | `bresser_hchovoc` | `hcho`, `voc_level`, `channel` |
 
-Every model also has `rssi` (sensor), `battery_low`, `startup`, `online` (binary sensors) and
-`last_seen` (text sensor).
+Every model also has `transmitter_id` and `rssi` (sensors), `battery_low`, `startup`, `online`
+(binary sensors) and `last_seen` (text sensor).
 
 The 7-in-1 has been tested with a real station. The other products use the same frame format
 and are decoded exactly as rtl_433 decodes them (see [Tests](#development)), but have not been
@@ -158,6 +158,7 @@ Then one entry per field, each taking the usual options of its platform (`name`,
 | `hcho` | ppb | volatile_organic_compounds_parts | Formaldehyde. |
 | `voc_level` | | | 1 (bad) to 5 (good). |
 | `channel` | | | Channel switch of an air quality sensor. Diagnostic. |
+| `transmitter_id` | | | The id in the last frame, i.e. the value for `sensor_id`. Diagnostic. |
 | `rssi` | dBm | signal_strength | Of the last frame. Diagnostic. |
 
 All have `state_class: measurement` unless noted (`rain`, `wind_direction`). A measurement is published only when the
@@ -236,12 +237,14 @@ bresser:
 With a single sensor of each model in range you do not need `sensor_id`. If a neighbour's
 sensor of the same model is in range too, find yours:
 
+- With one sensor of a model in range, add `transmitter_id` to its block: the entity shows the
+  id directly in Home Assistant.
 - The log prints one line per frame at `DEBUG` level, for example
   `Bresser 7-in-1 id=12345 ch=0 rssi=-71.0 (not configured)`, and an `INFO` hint the first
   time since boot that an unconfigured sensor is heard.
 - The `unknown_devices` entity lists every unconfigured sensor with its signal strength. The
   strongest is usually the closest.
-- The id changes when you replace a sensor's batteries. Note the new one from the log or
+- The id can change when you replace a sensor's batteries. Note the new one from the log or
   `unknown_devices` and update `sensor_id`.
 
 ## Troubleshooting
