@@ -1,0 +1,6 @@
+# The hub accepts an SX127x, not only an SX126x (see good_sx127x_radio.common.yaml).
+sensor:
+  - platform: bresser
+    model: bresser_7in1
+    temperature:
+      name: "Temperature"

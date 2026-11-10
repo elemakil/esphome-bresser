@@ -1,7 +1,7 @@
 # Radio settings
 
 The component does not configure the radio. It registers as a listener on an ESPHome
-`sx126x` or `cc1101` component and decodes whatever packets that radio delivers, so the
+`sx126x`, `sx127x` or `cc1101` component and decodes whatever packets that radio delivers, so the
 radio block in your YAML has to be set up for Bresser frames. The
 [examples](../examples/) carry these settings with comments; this page explains them.
 
@@ -108,3 +108,26 @@ reach its magnitude target, so the slicer is less likely to emit near-random bit
 
 Wiring and board notes:
 [hardware/esp32-s3-super-mini-cc1101.md](hardware/esp32-s3-super-mini-cc1101.md).
+
+## SX127x
+
+The same profile on the SX1276/SX1278 (ESPHome `sx127x`), as used in
+[`examples/ttgo-lora32-v2-1-6.yaml`](../examples/ttgo-lora32-v2-1-6.yaml). It has not yet been
+confirmed with a station; the values are carried over from the SX126x and CC1101 profiles.
+
+| SX126x | SX127x | Notes |
+|---|---|---|
+| `modulation: FSK` | `modulation: FSK`, `packet_mode: true` | |
+| `bitrate: 8210` | `bitrate: 8210` | |
+| `deviation: 57.1kHz` | `deviation: 57.1kHz` | |
+| `bandwidth: 234_3kHz` | `bandwidth: 250_0kHz` | the nearest SX127x FSK receive bandwidth |
+| `sync_value: [0xAA, 0xAA, 0x2D, 0xD4]` | same | the SX127x matches up to 8 sync bytes |
+| `preamble_detect: 1` | `preamble_detect: 1` | |
+| `payload_length: 32` | `payload_length: 32` | |
+| `crc_enable: false` | `crc_enable: false` | |
+| -- | `bitsync: true` | required by ESPHome in FSK mode |
+| -- | `rx_floor: -94` | RSSI threshold for starting a reception; lower it if a distant station is not heard |
+
+There is no whitening key to turn off: ESPHome's `sx127x` always configures the packet engine
+without DC-free encoding (whitening or Manchester).
+

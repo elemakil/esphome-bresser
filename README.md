@@ -1,7 +1,7 @@
 # esphome-bresser
 
 An [ESPHome](https://esphome.io) external component that receives **Bresser 868 MHz weather
-and air quality sensors** with an SX126x or CC1101 radio and publishes their readings as
+and air quality sensors** with an SX126x, SX127x or CC1101 radio and publishes their readings as
 Home Assistant entities.
 
 The radio's packet engine captures each frame; the component checks its digest, decodes it
@@ -32,9 +32,10 @@ tried on hardware here.
 |---|---|---|---|
 | Heltec WiFi LoRa 32 V3 | SX1262 | [`examples/heltec-wifi-lora-32-v3.yaml`](examples/heltec-wifi-lora-32-v3.yaml) | [hardware notes](docs/hardware/heltec-wifi-lora-32-v3.md) |
 | ESP32-S3 Super Mini + CC1101 breakout | CC1101 | [`examples/esp32-s3-cc1101.yaml`](examples/esp32-s3-cc1101.yaml) | [hardware notes](docs/hardware/esp32-s3-super-mini-cc1101.md) |
+| LILYGO TTGO LoRa32-OLED V2.1.6 (T3 V1.6.1), 868 MHz | SX1276 | [`examples/ttgo-lora32-v2-1-6.yaml`](examples/ttgo-lora32-v2-1-6.yaml) | not yet tested with a station; shows readings on the OLED |
 
-Any board with an ESPHome `sx126x` or `cc1101` radio should work with the same radio
-settings; [docs/radio-settings.md](docs/radio-settings.md) explains them. Both examples need
+Any board with an ESPHome `sx126x`, `sx127x` or `cc1101` radio should work with the same radio
+settings; [docs/radio-settings.md](docs/radio-settings.md) explains them. All examples need
 ESPHome 2026.10 or later.
 
 ## Quick start
