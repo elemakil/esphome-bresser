@@ -138,13 +138,9 @@ sensor:
       name: "Rain"
     illuminance:
       name: "Illuminance"
+    # No `rssi` sensor: ESPHome's sx127x does not report signal strength in FSK mode.
     uv_index:
       name: "UV Index"
-    transmitter_id:
-      name: "Transmitter ID"
-    rssi:
-      id: bresser_rssi
-      name: "Signal"
 
   # The board's battery connector, measured through an on-board 1:2 divider. Remove this
   # block if the board runs from USB only.
@@ -175,6 +171,8 @@ text_sensor:
     device_id: dev_bresser
     last_seen:
       name: "Last Seen"
+    transmitter_id:
+      name: "Transmitter ID"
   # Belongs to the receiver: lists Bresser sensors in range that no block above claims.
   - platform: bresser
     unknown_devices:
@@ -198,7 +196,8 @@ display:
   - platform: ssd1306_i2c
     model: SSD1306_128X64
     address: 0x3C
-    reset_pin: GPIO16
+    # No reset_pin: the OLED's reset is not wired to a GPIO on this board, and GPIO16 (often
+    # quoted) connects to the ESP32-PICO-D4's internal flash -- driving it crashes the board.
     update_interval: 5s
     lambda: |-
       if (!id(bresser_online).state) {
@@ -208,4 +207,3 @@ display:
       it.printf(0, 0, id(font_big), "%.1f°C", id(bresser_temperature).state);
       it.printf(0, 28, id(font_small), "Humidity %.0f %%", id(bresser_humidity).state);
       it.printf(0, 41, id(font_small), "Wind %.1f m/s", id(bresser_wind_speed).state);
-      it.printf(0, 54, id(font_small), "Signal %.0f dBm", id(bresser_rssi).state);

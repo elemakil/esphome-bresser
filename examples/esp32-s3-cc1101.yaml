@@ -197,8 +197,6 @@ sensor:
       name: "Illuminance"
     uv_index:
       name: "UV Index"
-    transmitter_id:
-      name: "Transmitter ID"
     rssi:
       name: "Signal"
 
@@ -219,6 +217,8 @@ text_sensor:
     device_id: dev_bresser
     last_seen:
       name: "Last Seen"
+    transmitter_id:
+      name: "Transmitter ID"
   # Belongs to the receiver: lists Bresser sensors in range that no block above claims.
   - platform: bresser
     unknown_devices:

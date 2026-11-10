@@ -19,12 +19,19 @@ from . import (
 DEPENDENCIES = ["bresser"]
 
 CONF_LAST_SEEN = "last_seen"
+CONF_TRANSMITTER_ID = "transmitter_id"
 CONF_UNKNOWN_DEVICES = "unknown_devices"
 
 DEVICE_SCHEMA = device_schema(
     {
         CONF_LAST_SEEN: text_sensor.text_sensor_schema(
             device_class=DEVICE_CLASS_TIMESTAMP,
+            entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+        ),
+        # The id received in the frame, i.e. the value to use for `sensor_id`. A text sensor
+        # because it is an identifier: shown as-is, never graphed or averaged.
+        CONF_TRANSMITTER_ID: text_sensor.text_sensor_schema(
+            icon="mdi:identifier",
             entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
         ),
     }
@@ -64,3 +71,5 @@ async def to_code(config):
     device = await get_device(config)
     if conf := config.get(CONF_LAST_SEEN):
         cg.add(device.set_last_seen_sensor(await text_sensor.new_text_sensor(conf)))
+    if conf := config.get(CONF_TRANSMITTER_ID):
+        cg.add(device.set_transmitter_id_sensor(await text_sensor.new_text_sensor(conf)))
