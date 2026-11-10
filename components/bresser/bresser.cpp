@@ -97,6 +97,10 @@ void BresserComponent::setup() {
   if (this->cc1101_ != nullptr)
     this->cc1101_->register_listener(this);
 #endif
+#ifdef BRESSER_RADIO_SX127X
+  if (this->sx127x_ != nullptr)
+    this->sx127x_->register_listener(this);
+#endif
   if (this->unknown_sensor_ != nullptr)
     this->publish_unknown_(millis());
   this->set_interval(1000, [this]() {
@@ -115,6 +119,9 @@ void BresserComponent::dump_config() {
 #ifdef BRESSER_RADIO_CC1101
   ESP_LOGCONFIG(TAG, "  Radio: CC1101");
 #endif
+#ifdef BRESSER_RADIO_SX127X
+  ESP_LOGCONFIG(TAG, "  Radio: SX127x");
+#endif
   for (auto *d : this->devices_) {
     if (d->sensor_id() < 0) {
       ESP_LOGCONFIG(TAG, "  Device: %s, any id", model_name(d->type()).name);
@@ -124,7 +131,7 @@ void BresserComponent::dump_config() {
   }
 }
 
-#ifdef BRESSER_RADIO_SX126X
+#if defined(BRESSER_RADIO_SX126X) || defined(BRESSER_RADIO_SX127X)
 void BresserComponent::on_packet(const std::vector<uint8_t> &packet, float rssi, float snr) {
   this->handle_packet_(packet, rssi);
 }

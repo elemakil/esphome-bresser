@@ -1,0 +1,44 @@
+# Replaces common.yaml for good_sx127x_radio.yaml: the same scaffold with an SX127x in place
+# of the SX126x. It has to replace rather than extend, because the fixture's whole point is
+# that the *only* radio present is an SX127x -- nothing else in the suite would notice if
+# radio_id silently accepted only an SX126x. It covers the config path only; the SX127x C++
+# branch is compiled by tools/build_examples.sh (examples/ttgo-lora32-v2-1-6.yaml).
+#
+# Only the keys the schema requires are set; the full radio tuning lives in the example.
+esphome:
+  name: config-test
+  devices:
+    - id: dev_a
+      name: "Sub Device A"
+    - id: dev_b
+      name: "Sub Device B"
+
+esp32:
+  variant: esp32
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+spi:
+  clk_pin: GPIO5
+  mosi_pin: GPIO27
+  miso_pin: GPIO19
+
+sx127x:
+  id: radio
+  cs_pin: GPIO18
+  rst_pin: GPIO23
+  dio0_pin: GPIO26
+  modulation: FSK
+  frequency: 868.3MHz
+  packet_mode: true
+  bitsync: true
+
+bresser:
+  id: hub
+  radio_id: radio

@@ -1,0 +1,209 @@
+# Bresser 868 MHz receiver on a LILYGO TTGO LoRa32-OLED V2.1.6 (also sold as T3 V1.6.1) --
+# ESP32 + Semtech SX1276 + 0.96" SSD1306 OLED. Use the 868 MHz version of the board.
+#
+# A complete device config: copy it, create secrets.yaml from secrets.yaml.example, and
+# flash. The station's readings appear in Home Assistant as entities of a "Bresser 7-in-1"
+# sub-device, and the latest reading is shown on the OLED.
+#
+# The SX127x radio settings carry over the values that are known to work on the SX126x and
+# CC1101 (see docs/radio-settings.md); they have not yet been confirmed with a station on
+# this board. If no frames arrive, use the on_packet hex dump below to check reception.
+# If you have a different Bresser product (8-in-1, 3-in-1, air quality sensors), only the
+# entity blocks at the bottom change.
+
+substitutions:
+  name: bresser-receiver
+  friendly_name: Bresser Receiver
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.10.0
+  devices:
+    - id: dev_bresser
+      name: "Bresser 7-in-1"
+
+esp32:
+  variant: esp32
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+external_components:
+  - source: github://elemakil/esphome-bresser@main
+    components: [bresser]
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    password: !secret ap_password
+
+captive_portal:
+
+# Wall-clock time for the `last_seen` entity.
+time:
+  - platform: homeassistant
+
+# --- Radio ------------------------------------------------------------------
+#
+# CRC is OFF on purpose: the component validates the frame's own LFSR-16 digest and does its
+# own de-whitening. Pins are hard-wired on this board.
+
+spi:
+  clk_pin: GPIO5
+  mosi_pin: GPIO27
+  miso_pin: GPIO19
+
+sx127x:
+  id: radio
+  cs_pin: GPIO18
+  rst_pin: GPIO23
+  dio0_pin: GPIO26 # signals "packet ready" in FSK packet mode
+
+  modulation: FSK
+  packet_mode: true
+  # The bit synchronizer recovers the bit clock from the incoming data; required in FSK.
+  bitsync: true
+  frequency: 868.3MHz
+  bitrate: 8210 # baud; 124 us bit period
+  deviation: 57.1kHz
+  # The SX127x's FSK receive bandwidths step 200 -> 250 kHz; 250 kHz is the nearest to the
+  # ~234 kHz used on the other radios and comfortably covers the +-57 kHz deviation.
+  bandwidth: 250_0kHz
+  shaping: NONE
+
+  # Two bytes of the AA preamble plus Bresser's 2D D4 sync word. The packet engine consumes
+  # these, so the payload it delivers starts right after 2D D4, which is what the component
+  # expects.
+  sync_value: [0xAA, 0xAA, 0x2D, 0xD4]
+  preamble_detect: 1
+  payload_length: 32 # the decoder needs >= 25; real frames run ~33 with padding
+  crc_enable: false
+  # RSSI threshold for starting a reception (ESPHome's default). Lower it, e.g. to -100, if a
+  # distant station is not heard; raise it if noise keeps triggering receptions.
+  rx_floor: -94
+
+  rx_start: true
+
+  # Optional: a hex dump of every packet, decoded or not. A line can be decoded offline with
+  # the host build of the decoder (see tests/README.md). Remove it once reception is settled.
+  # The trigger yields (std::vector<uint8_t> x, float rssi, float snr).
+  on_packet:
+    then:
+      - lambda: |-
+          char hex[format_hex_size(64)];
+          format_hex_to(hex, x);
+          ESP_LOGD("radio", "rx %u bytes rssi=%.1f  %s", (unsigned) x.size(), rssi, hex);
+
+# --- Decoding ---------------------------------------------------------------
+
+bresser:
+  id: bresser_hub
+  radio_id: radio
+
+# --- Entities ---------------------------------------------------------------
+#
+# One block per entity platform for each physical sensor. With one station in range no
+# `sensor_id` is needed; if a neighbour's station shows up too, take your station's id from
+# the log or the "Unknown Bresser devices" entity and add `sensor_id: <id>` to every block.
+sensor:
+  - platform: bresser
+    model: bresser_7in1
+    device_id: dev_bresser
+    temperature:
+      id: bresser_temperature
+      name: "Temperature"
+    humidity:
+      id: bresser_humidity
+      name: "Humidity"
+    wind_speed:
+      id: bresser_wind_speed
+      name: "Wind Speed"
+    wind_gust:
+      name: "Wind Gust"
+    wind_direction:
+      name: "Wind Direction"
+    rain:
+      name: "Rain"
+    illuminance:
+      name: "Illuminance"
+    uv_index:
+      name: "UV Index"
+    rssi:
+      id: bresser_rssi
+      name: "Signal"
+
+  # The board's battery connector, measured through an on-board 1:2 divider. Remove this
+  # block if the board runs from USB only.
+  - platform: adc
+    pin: GPIO35
+    name: "Receiver Battery"
+    attenuation: 12db
+    filters:
+      - multiply: 2.0
+    update_interval: 60s
+    entity_category: diagnostic
+
+binary_sensor:
+  - platform: bresser
+    model: bresser_7in1
+    device_id: dev_bresser
+    battery_low:
+      name: "Battery"
+    startup:
+      name: "Startup"
+    online:
+      id: bresser_online
+      name: "Online"
+
+text_sensor:
+  - platform: bresser
+    model: bresser_7in1
+    device_id: dev_bresser
+    last_seen:
+      name: "Last Seen"
+  # Belongs to the receiver: lists Bresser sensors in range that no block above claims.
+  - platform: bresser
+    unknown_devices:
+      name: "Unknown Bresser devices"
+
+# --- OLED -------------------------------------------------------------------
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_big
+    size: 24
+  - file: "gfonts://Roboto"
+    id: font_small
+    size: 11
+
+display:
+  - platform: ssd1306_i2c
+    model: SSD1306_128X64
+    address: 0x3C
+    reset_pin: GPIO16
+    update_interval: 5s
+    lambda: |-
+      if (!id(bresser_online).state) {
+        it.print(64, 32, id(font_small), TextAlign::CENTER, "Waiting for station...");
+        return;
+      }
+      it.printf(0, 0, id(font_big), "%.1f°C", id(bresser_temperature).state);
+      it.printf(0, 28, id(font_small), "Humidity %.0f %%", id(bresser_humidity).state);
+      it.printf(0, 41, id(font_small), "Wind %.1f m/s", id(bresser_wind_speed).state);
+      it.printf(0, 54, id(font_small), "Signal %.0f dBm", id(bresser_rssi).state);

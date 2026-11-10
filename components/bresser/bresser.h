@@ -19,6 +19,9 @@
 #ifdef BRESSER_RADIO_CC1101
 #include "esphome/components/cc1101/cc1101.h"
 #endif
+#ifdef BRESSER_RADIO_SX127X
+#include "esphome/components/sx127x/sx127x.h"
+#endif
 
 #include "bresser_decoder.h"
 
@@ -92,6 +95,10 @@ class BresserComponent : public Component
     ,
                          public cc1101::CC1101Listener
 #endif
+#ifdef BRESSER_RADIO_SX127X
+    ,
+                         public sx127x::SX127xListener
+#endif
 {
  public:
   void setup() override;
@@ -100,6 +107,12 @@ class BresserComponent : public Component
 
 #ifdef BRESSER_RADIO_SX126X
   void set_radio(sx126x::SX126x *radio) { this->sx126x_ = radio; }
+#endif
+#ifdef BRESSER_RADIO_SX127X
+  void set_radio(sx127x::SX127x *radio) { this->sx127x_ = radio; }
+#endif
+#if defined(BRESSER_RADIO_SX126X) || defined(BRESSER_RADIO_SX127X)
+  // SX126x and SX127x listeners share this signature.
   void on_packet(const std::vector<uint8_t> &packet, float rssi, float snr) override;
 #endif
 #ifdef BRESSER_RADIO_CC1101
@@ -137,6 +150,9 @@ class BresserComponent : public Component
 #endif
 #ifdef BRESSER_RADIO_CC1101
   cc1101::CC1101Component *cc1101_{nullptr};
+#endif
+#ifdef BRESSER_RADIO_SX127X
+  sx127x::SX127x *sx127x_{nullptr};
 #endif
   std::vector<BresserDevice *> devices_;
   std::vector<ReadingTrigger *> triggers_;

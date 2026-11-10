@@ -1,4 +1,4 @@
-"""Bresser 868 MHz weather and air quality sensors, received with an SX126x or CC1101."""
+"""Bresser 868 MHz weather and air quality sensors, received with an SX126x, SX127x or CC1101."""
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
@@ -27,6 +27,7 @@ CONF_ON_READING = "on_reading"
 SUPPORTED_RADIOS = {
     "sx126x": "BRESSER_RADIO_SX126X",
     "cc1101": "BRESSER_RADIO_CC1101",
+    "sx127x": "BRESSER_RADIO_SX127X",
 }
 
 # Fields every model has, on top of its own.
