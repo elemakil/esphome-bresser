@@ -1,0 +1,29 @@
+# Secrets — never commit
+secrets.yaml
+
+# ESPHome build output
+.esphome/
+*.bin
+*.elf
+*.map
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.ruff_cache/
