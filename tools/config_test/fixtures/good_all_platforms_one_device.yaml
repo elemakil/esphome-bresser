@@ -19,6 +19,8 @@ sensor:
       name: "HCHO"
     voc_level:
       name: "VOC"
+    transmitter_id:
+      name: "HCHO Transmitter ID"
     rssi:
       name: "HCHO Signal"
 binary_sensor:

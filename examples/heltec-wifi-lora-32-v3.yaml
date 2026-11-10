@@ -154,6 +154,8 @@ sensor:
       name: "Illuminance"
     uv_index:
       name: "UV Index"
+    transmitter_id:
+      name: "Transmitter ID"
     rssi:
       name: "Signal"
 

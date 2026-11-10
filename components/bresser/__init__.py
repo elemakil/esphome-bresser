@@ -31,7 +31,7 @@ SUPPORTED_RADIOS = {
 }
 
 # Fields every model has, on top of its own.
-COMMON_FIELDS = ("rssi", "battery_low", "startup", "online", "last_seen")
+COMMON_FIELDS = ("transmitter_id", "rssi", "battery_low", "startup", "online", "last_seen")
 WEATHER = ("temperature", "humidity", "rain")
 WIND_AND_LIGHT = ("wind_speed", "wind_gust", "wind_direction", "illuminance", "uv_index")
 

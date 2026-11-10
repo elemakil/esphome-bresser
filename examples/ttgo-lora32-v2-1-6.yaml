@@ -140,6 +140,8 @@ sensor:
       name: "Illuminance"
     uv_index:
       name: "UV Index"
+    transmitter_id:
+      name: "Transmitter ID"
     rssi:
       id: bresser_rssi
       name: "Signal"

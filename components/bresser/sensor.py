@@ -86,6 +86,16 @@ FIELDS = {
         sensor.sensor_schema(accuracy_decimals=0, entity_category=ENTITY_CATEGORY_DIAGNOSTIC),
         None,
     ),
+    # The id received in the frame, i.e. the value to use for `sensor_id`. No state_class:
+    # it is an identifier, not a measurement, so Home Assistant keeps no statistics for it.
+    "transmitter_id": (
+        sensor.sensor_schema(
+            icon="mdi:identifier",
+            accuracy_decimals=0,
+            entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+        ),
+        None,
+    ),
     "rssi": (
         _measurement(
             UNIT_DECIBEL_MILLIWATT,
@@ -107,6 +117,8 @@ async def to_code(config):
         var = await sensor.new_sensor(config[key])
         if key == "channel":
             cg.add(device.set_channel_sensor(var))
+        elif key == "transmitter_id":
+            cg.add(device.set_transmitter_id_sensor(var))
         elif key == "rssi":
             cg.add(device.set_rssi_sensor(var))
         else:
