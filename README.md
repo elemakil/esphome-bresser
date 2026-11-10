@@ -19,8 +19,8 @@ listed, so you can find their ids.
 | CO₂ (PN 7009977) | `bresser_co2` | `co2`, `channel` |
 | HCHO/VOC (PN 7009978) | `bresser_hchovoc` | `hcho`, `voc_level`, `channel` |
 
-Every model also has `transmitter_id` and `rssi` (sensors), `battery_low`, `startup`, `online`
-(binary sensors) and `last_seen` (text sensor).
+Every model also has `rssi` (sensor), `battery_low`, `startup`, `online` (binary sensors),
+`last_seen` and `transmitter_id` (text sensors).
 
 The 7-in-1 has been tested with a real station. The other products use the same frame format
 and are decoded exactly as rtl_433 decodes them (see [Tests](#development)), but have not been
@@ -158,8 +158,7 @@ Then one entry per field, each taking the usual options of its platform (`name`,
 | `hcho` | ppb | volatile_organic_compounds_parts | Formaldehyde. |
 | `voc_level` | | | 1 (bad) to 5 (good). |
 | `channel` | | | Channel switch of an air quality sensor. Diagnostic. |
-| `transmitter_id` | | | The id in the last frame, i.e. the value for `sensor_id`. Diagnostic. |
-| `rssi` | dBm | signal_strength | Of the last frame. Diagnostic. |
+| `rssi` | dBm | signal_strength | Of the last frame. Diagnostic. Unknown with an SX127x radio, which reports no RSSI in FSK mode. |
 
 All have `state_class: measurement` unless noted (`rain`, `wind_direction`). A measurement is published only when the
 frame carries it: air quality sensors send no value while warming up after power-on.
@@ -182,6 +181,7 @@ sends every ~12 s, so the default tolerates several missed frames.
 | Field | Device class | Meaning |
 |---|---|---|
 | `last_seen` | timestamp | Time of the last frame, ISO 8601 UTC. Diagnostic. |
+| `transmitter_id` | | The id in the last frame, i.e. the value for `sensor_id`. Diagnostic. |
 
 `last_seen` needs a [time](https://esphome.io/components/time/) component, e.g.
 `time: - platform: homeassistant`. Until the clock is set, nothing is published.
@@ -198,7 +198,8 @@ text_sensor:
 ```
 
 It lists the Bresser sensors in range that no block matches, most recently heard first, as
-`<model> <id> <rssi>dBm` separated by `; `, for example `7in1 12345 -71dBm; co2 4711 -80dBm`.
+`<model> <id> <rssi>dBm` separated by `; `, for example `7in1 12345 -71dBm; co2 4711 -80dBm`
+(without the dBm part on an SX127x radio).
 The model is the `model:` key without the `bresser_` prefix. When there are none it shows
 `none`.
 
@@ -218,7 +219,7 @@ text is limited to 255 characters.
 | `channel` | `uint8_t` | |
 | `startup` | `bool` | |
 | `battery_ok` | `bool` | |
-| `rssi` | `float` | dBm. |
+| `rssi` | `float` | dBm; `NAN` with an SX127x radio. |
 | `temperature`, `humidity`, `wind_gust`, `wind_speed`, `wind_direction`, `rain`, `illuminance_lux`, `uv_index`, `globe_temperature`, `pm2_5`, `pm10`, `co2`, `hcho`, `voc_level` | `std::optional<float>` | Units as in the sensor table. Empty when the frame does not carry the value. |
 
 ```yaml

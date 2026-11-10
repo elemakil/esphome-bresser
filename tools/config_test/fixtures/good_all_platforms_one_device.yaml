@@ -19,8 +19,6 @@ sensor:
       name: "HCHO"
     voc_level:
       name: "VOC"
-    transmitter_id:
-      name: "HCHO Transmitter ID"
     rssi:
       name: "HCHO Signal"
 binary_sensor:
@@ -38,3 +36,5 @@ text_sensor:
     model: bresser_8in1
     last_seen:
       name: "Last Seen"
+    transmitter_id:
+      name: "Transmitter ID"

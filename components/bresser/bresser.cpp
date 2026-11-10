@@ -51,8 +51,12 @@ void BresserDevice::publish(const Reading &r, uint32_t now) {
     this->channel_sensor_->publish_state(r.channel);
   if (this->rssi_sensor_ != nullptr)
     this->rssi_sensor_->publish_state(r.rssi);
-  if (this->transmitter_id_sensor_ != nullptr)
-    this->transmitter_id_sensor_->publish_state(r.id);
+  if (this->transmitter_id_sensor_ != nullptr && r.id != this->transmitter_id_published_) {
+    char id[8];
+    snprintf(id, sizeof(id), "%u", r.id);
+    this->transmitter_id_sensor_->publish_state(id);
+    this->transmitter_id_published_ = r.id;
+  }
   // device_class battery: ON means the battery is low.
   if (this->battery_sensor_ != nullptr)
     this->battery_sensor_->publish_state(!r.battery_ok);
@@ -135,6 +139,12 @@ void BresserComponent::dump_config() {
 
 #if defined(BRESSER_RADIO_SX126X) || defined(BRESSER_RADIO_SX127X)
 void BresserComponent::on_packet(const std::vector<uint8_t> &packet, float rssi, float snr) {
+#ifdef BRESSER_RADIO_SX127X
+  // ESPHome's sx127x reports no RSSI in FSK packet mode (it passes 0). Report it as unknown
+  // rather than as a real 0 dBm.
+  if (this->sx127x_ != nullptr)
+    rssi = NAN;
+#endif
   this->handle_packet_(packet, rssi);
 }
 #endif
@@ -229,8 +239,12 @@ void BresserComponent::publish_unknown_(uint32_t now) {
   std::vector<uint32_t> keys;
   for (const auto &u : this->unknown_) {
     char entry[40];
-    snprintf(entry, sizeof(entry), "%s%s %u %ddBm", text.empty() ? "" : "; ", model_name(u.type).key, u.id,
-             (int) lroundf(u.rssi));
+    if (std::isnan(u.rssi)) {
+      snprintf(entry, sizeof(entry), "%s%s %u", text.empty() ? "" : "; ", model_name(u.type).key, u.id);
+    } else {
+      snprintf(entry, sizeof(entry), "%s%s %u %ddBm", text.empty() ? "" : "; ", model_name(u.type).key, u.id,
+               (int) lroundf(u.rssi));
+    }
     if (text.size() + strlen(entry) > 255)
       break;
     text += entry;

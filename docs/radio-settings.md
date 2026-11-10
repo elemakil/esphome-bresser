@@ -128,6 +128,9 @@ confirmed with a station; the values are carried over from the SX126x and CC1101
 | -- | `bitsync: true` | required by ESPHome in FSK mode |
 | -- | `rx_floor: -94` | RSSI threshold for starting a reception; lower it if a distant station is not heard |
 
+ESPHome's `sx127x` passes no RSSI to listeners in FSK packet mode, so with this radio the
+`rssi` sensor stays unknown and logs show `rssi=nan`.
+
 There is no whitening key to turn off: ESPHome's `sx127x` always configures the packet engine
 without DC-free encoding (whitening or Manchester).
 

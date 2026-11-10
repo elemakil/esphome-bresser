@@ -43,7 +43,7 @@ class BresserDevice {
   void add_sensor(std::optional<float> Reading::*field, sensor::Sensor *s) { this->sensors_.push_back({field, s}); }
   void set_channel_sensor(sensor::Sensor *s) { this->channel_sensor_ = s; }
   void set_rssi_sensor(sensor::Sensor *s) { this->rssi_sensor_ = s; }
-  void set_transmitter_id_sensor(sensor::Sensor *s) { this->transmitter_id_sensor_ = s; }
+  void set_transmitter_id_sensor(text_sensor::TextSensor *s) { this->transmitter_id_sensor_ = s; }
   void set_battery_sensor(binary_sensor::BinarySensor *s) { this->battery_sensor_ = s; }
   void set_startup_sensor(binary_sensor::BinarySensor *s) { this->startup_sensor_ = s; }
   void set_online_sensor(binary_sensor::BinarySensor *s, uint32_t timeout_ms) {
@@ -67,7 +67,8 @@ class BresserDevice {
   std::vector<SensorBinding> sensors_;
   sensor::Sensor *channel_sensor_{nullptr};
   sensor::Sensor *rssi_sensor_{nullptr};
-  sensor::Sensor *transmitter_id_sensor_{nullptr};
+  text_sensor::TextSensor *transmitter_id_sensor_{nullptr};
+  int32_t transmitter_id_published_{-1};  ///< publish only when the id changes
   binary_sensor::BinarySensor *battery_sensor_{nullptr};
   binary_sensor::BinarySensor *startup_sensor_{nullptr};
   binary_sensor::BinarySensor *online_sensor_{nullptr};
