@@ -176,4 +176,5 @@ async def get_device(config):
     hub = await cg.get_variable(config[CONF_BRESSER_ID])
     s_type = MODELS[config[CONF_MODEL]][0]
     sensor_id = config.get(CONF_SENSOR_ID, -1)
-    return hub.get_device(s_type, sensor_id)
+    # get_device() returns a pointer, so member calls on the result must use `->`.
+    return cg.MockObj(hub.get_device(s_type, sensor_id), "->")
