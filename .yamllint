@@ -1,0 +1,31 @@
+# Calibrated against this repository, not adopted from defaults.
+#
+# yamllint parses YAML rather than loading it, so ESPHome's `!secret` and `!include` tags
+# need no special handling -- verified, not assumed.
+#
+# tools/config_test/fixtures/*.yaml are fragments concatenated onto common.yaml by run.sh,
+# not standalone documents. They lint cleanly anyway once document-start is off, so they are
+# NOT excluded -- a fixture with a real YAML error should still fail this.
+
+extends: default
+
+rules:
+  # ESPHome configuration and the comment blocks explaining it do not fit in 80 columns.
+  line-length:
+    max: 120
+
+  # ESPHome configs conventionally omit the leading `---`.
+  document-start: disable
+
+  # One space before a trailing comment matches the existing YAML and ESPHome's own docs.
+  comments:
+    min-spaces-from-content: 1
+
+  # Keys like `on:` or `no:` are ESPHome pin/option names, not booleans.
+  truthy:
+    check-keys: false
+
+  # ESPHome examples use both `- item` at parent indent and indented; accept either.
+  indentation:
+    spaces: consistent
+    indent-sequences: whatever

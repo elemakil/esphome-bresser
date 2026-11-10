@@ -1,0 +1,23 @@
+# Python tooling configuration. This project ships no Python package: the Python here is
+# ESPHome codegen (components/bresser/*.py) and the test runner (tests/run_golden.py).
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+# Scratch trees the tools rebuild on every run; they hold copies of components/.
+exclude = ["build", "tools/config_test/work"]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "F",     # pyflakes
+    "W",     # pycodestyle warnings
+    "I",     # import sorting
+    "UP",    # pyupgrade
+    "B",     # bugbear
+    "SIM",   # simplify
+    "PERF",  # performance
+    "FURB",  # modernisation
+    "RUF",   # ruff-specific
+]

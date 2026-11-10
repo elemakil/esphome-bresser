@@ -1,0 +1,7 @@
+# expect: 'wind_speed' is not available for model 'bresser_3in1'
+# The 3-in-1 has no anemometer.
+sensor:
+  - platform: bresser
+    model: bresser_3in1
+    wind_speed:
+      name: "Wind Speed"

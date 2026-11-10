@@ -1,0 +1,94 @@
+# Lint, test and build the component on every pull request and every push to main.
+#
+# Jobs call the repository's own scripts, so green CI means the same thing as a green run on
+# a workstation. CI never flashes: builds use throwaway secrets from tools/ci_secrets.sh.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Files are selected with `git ls-files`, so scratch copies under build/ and
+  # tools/config_test/work/ are never linted. Linter versions are pinned.
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      SHELLCHECK_VERSION: "0.11.0"
+      SHFMT_VERSION: "3.13.1"
+      SHELLCHECK_REL: "https://github.com/koalaman/shellcheck/releases/download"
+      SHFMT_REL: "https://github.com/mvdan/sh/releases/download"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install linters
+        run: |
+          pip install --quiet ruff==0.16.1 yamllint==1.38.0 clang-format==22.1.8
+          sc="shellcheck-v${SHELLCHECK_VERSION}"
+          curl -sSfL "${SHELLCHECK_REL}/v${SHELLCHECK_VERSION}/${sc}.linux.x86_64.tar.xz" | tar -xJ -C /tmp
+          sudo install "/tmp/${sc}/shellcheck" /usr/local/bin/
+          sudo curl -sSfL "${SHFMT_REL}/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64" -o /usr/local/bin/shfmt
+          sudo chmod +x /usr/local/bin/shfmt
+      - name: ruff
+        run: |
+          ruff check $(git ls-files '*.py')
+          ruff format --check $(git ls-files '*.py')
+      - name: shellcheck
+        run: shellcheck $(git ls-files '*.sh')
+      - name: shfmt
+        run: shfmt -d -i 4 -ci $(git ls-files '*.sh')
+      - name: yamllint
+        run: yamllint $(git ls-files '*.yaml' '*.yml')
+      - name: clang-format
+        run: clang-format --dry-run --Werror $(git ls-files '*.cpp' '*.h')
+
+  # The decoder against rtl_433's output for 1556 payloads; see tests/README.md.
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python3 tests/run_golden.py
+
+  # Schema validation of good and bad configurations, inside the pinned ESPHome image.
+  config-test:
+    runs-on: ubuntu-latest
+    container: ghcr.io/esphome/esphome:2026.10.1
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./tools/config_test/run.sh
+
+  # The only job that compiles C++. Both examples are built because each exercises a
+  # different radio's code path.
+  build-examples:
+    runs-on: ubuntu-latest
+    container: ghcr.io/esphome/esphome:2026.10.1
+    env:
+      PLATFORMIO_CORE_DIR: ${{ github.workspace }}/.platformio
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: .platformio
+          key: platformio-esphome-2026.10.1-${{ hashFiles('examples/*.yaml') }}
+          restore-keys: platformio-esphome-2026.10.1-
+      - run: ./tools/build_examples.sh compile

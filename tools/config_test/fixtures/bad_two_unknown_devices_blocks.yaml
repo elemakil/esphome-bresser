@@ -1,0 +1,8 @@
+# expect: 'unknown_devices' is declared 2 times
+text_sensor:
+  - platform: bresser
+    unknown_devices:
+      name: "Unknown Bresser devices"
+  - platform: bresser
+    unknown_devices:
+      name: "Unknown Bresser devices 2"

@@ -1,0 +1,8 @@
+# expect: is not a supported radio
+# radio_id accepts any component id, so the hub's final validation must reject one that is
+# not a radio -- here the SPI bus. Otherwise it would fail later, at compile time.
+sensor:
+  - platform: bresser
+    model: bresser_7in1
+    temperature:
+      name: "Temperature"

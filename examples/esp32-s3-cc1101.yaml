@@ -1,0 +1,223 @@
+# Bresser 868 MHz receiver on an ESP32-S3 Super Mini with an 8-pin CC1101 breakout
+# (pin order varies between modules, see
+# docs/hardware/esp32-s3-super-mini-cc1101.md).
+#
+# A complete device config: copy it, create secrets.yaml from secrets.yaml.example, and
+# flash. The station's readings appear in Home Assistant as entities of a "Bresser 7-in-1"
+# sub-device.
+#
+# The radio values are the same ones validated on the SX1262 (see
+# heltec-wifi-lora-32-v3.yaml), translated onto the CC1101's registers. The two chips'
+# settings are not one-to-one; the comments below say where and why they differ.
+#
+# WIRING: CC1101 breakouts are NOT consistent about their pin order -- the same 8-pin
+# footprint exists with power reversed, SPI permuted and GDO0 on a different pin. The pins
+# below match one such module. Verify yours before trusting them: if `dump_config` reports
+# a plausible chip id, SPI and power are right, and only gdo0_pin can still be wrong.
+
+substitutions:
+  name: bresser-receiver
+  friendly_name: Bresser Receiver
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  # The release this config is validated against.
+  min_version: 2026.10.0
+  # Home Assistant sub-device, so the station's readings are filed under the station
+  # rather than alongside the receiver's own diagnostics.
+  devices:
+    - id: dev_bresser
+      name: "Bresser 7-in-1"
+
+  # The CC1101 has no `rx_start: true`. Its setup() configures the chip and attaches the
+  # GDO0 interrupt but leaves it in IDLE, so without this the radio initialises perfectly,
+  # reports a good chip id, and receives absolutely nothing -- which looks exactly like a
+  # wiring fault. Priority -100 runs it after every component's setup(), so the SPI bus and
+  # the CC1101 itself are both up before the RX strobe.
+  on_boot:
+    - priority: -100
+      then:
+        - cc1101.begin_rx: radio
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+external_components:
+  - source: github://elemakil/esphome-bresser@main
+    components: [bresser]
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    password: !secret ap_password
+
+captive_portal:
+
+# Wall-clock time for the `last_seen` entity. Without a time source the clock never becomes
+# valid, and last_seen stays unpublished rather than reporting a 1970 timestamp.
+time:
+  - platform: homeassistant
+
+# --- Radio ------------------------------------------------------------------
+#
+# The CC1101 is a 3.3 V part: power the module from 3V3, never 5V.
+
+spi:
+  clk_pin: GPIO4
+  mosi_pin: GPIO5
+  miso_pin: GPIO6 # module MISO, which doubles as GDO1
+
+cc1101:
+  id: radio
+  cs_pin: GPIO7
+  # REQUIRED for packet mode, and the component validates that. In packet mode GDO0 is
+  # configured to assert at end-of-packet and drives the interrupt that wakes loop() to
+  # drain the FIFO -- nothing is polled, so without this pin the radio receives and no
+  # frame is ever read out. GDO2 is not used.
+  #
+  # If the interrupt fires constantly but no frames arrive, this pin is GDO2, not GDO0:
+  # swap it with the module's other GDO pin.
+  gdo0_pin: GPIO2
+
+  # The SX126x keys and these are not one-to-one; the mapping is:
+  #   frequency  868.3MHz  -> frequency        (same)
+  #   modulation FSK       -> modulation_type: "2-FSK"
+  #   bitrate    8210      -> symbol_rate      (same number, different key)
+  #   deviation  57.1kHz   -> fsk_deviation    (same)
+  #   bandwidth  234_3kHz  -> filter_bandwidth (see below -- NOT the same value)
+  frequency: 868.3MHz
+  modulation_type: "2-FSK"
+  symbol_rate: 8210
+  fsk_deviation: 57.1kHz
+
+  # The SX126x's 234_3kHz is one of its enumerated bandwidths. The CC1101's filter is set by
+  # an (E, M) pair, BW = 26 MHz / (8 * (4 + M) * 2^E), so it quantises: 234.3 kHz resolves
+  # to E=1, M=3 -> 232.14 kHz, the nearest step below. The two neighbours are 232.14 and
+  # 270.83, and 232 is the closer to the validated figure. Written as the SX126x value
+  # rather than the chip's so the intent stays legible; `dump_config` prints what the chip
+  # actually got.
+  filter_bandwidth: 234.3kHz
+
+  # The SX126x matches four bytes, AA AA 2D D4 -- two of preamble plus the real two-byte
+  # sync. The CC1101 has only a 16-bit sync register, so it qualifies on 2D D4 alone.
+  #
+  # That is genuinely LESS selective, and it is the one place this config is weaker than the
+  # SX126x's by construction. The chip's own answer is PQT (preamble quality threshold), the
+  # analogue of the SX126x's `preamble_detect`, but ESPHome's cc1101 component does not
+  # expose it, so it sits at the datasheet default. Expect more false syncs than on the
+  # SX126x; they fail the digest check and are dropped (visible at VERBOSE log level).
+  #
+  # 30/32 is not an option: it requires the sync word to appear TWICE on air (2D D4 2D D4),
+  # and the station does not send that.
+  sync_mode: "16/16"
+  sync1: 0x2D
+  sync0: 0xD4
+
+  # ESPHome's default for this key is "-3", the chip's most restrictive setting:
+  # AGCCTRL2.MAX_DVGA_GAIN = 0b11 blocks the three highest digital-gain steps, roughly 18 dB
+  # of the AGC's range. That trades sensitivity for selectivity, which is not what a
+  # weak-signal receiver wants. "Default" restores the full range.
+  #
+  # With its whole digital range the AGC can reach its magnitude target, so the slicer is
+  # less likely to emit the near-random bitstream that matches 2D D4 by chance.
+  max_dvga_gain: "Default"
+
+  # Fixed-length capture after sync, the CC1101's equivalent of payload_length. 32 for
+  # parity with the SX126x: the decoder needs >= 25 bytes and real frames run ~33 with
+  # padding. The FIFO is 64 bytes, so this is well inside it.
+  packet_mode: true
+  packet_length: 32
+
+  # OFF on purpose, exactly as on the SX126x: the component does its own de-whitening
+  # and validates the frame's own LFSR-16 digest. Turning either on corrupts the payload.
+  crc_enable: false
+  whitening: false
+
+  # Optional: a hex dump of every packet, decoded or not. A line can be decoded offline with
+  # the host build of the decoder (see tests/README.md). Remove it once reception is settled.
+  #
+  # The trigger yields (std::vector<uint8_t> x, float freq_offset, float rssi, uint8_t lqi)
+  # -- note this differs from the SX126x's (x, rssi, snr). freq_offset is the chip's own
+  # estimate of how far the transmitter sits off centre: a large steady offset says the
+  # frequency needs trimming, rather than the modulation being wrong. lqi is the CC1101's
+  # link-quality figure -- lower is better, and it is not comparable to the SX126x's snr.
+  on_packet:
+    then:
+      - lambda: |-
+          char hex[format_hex_size(64)];
+          format_hex_to(hex, x);
+          ESP_LOGD("radio", "rx %u bytes rssi=%.1f foff=%.0fHz lqi=%u  %s", (unsigned) x.size(), rssi,
+                   freq_offset, lqi, hex);
+
+# --- Decoding ---------------------------------------------------------------
+#
+# The component registers itself as a listener on the radio, so it receives packets
+# alongside the on_packet trigger above rather than through it.
+bresser:
+  id: bresser_hub
+  radio_id: radio
+
+# --- Entities ---------------------------------------------------------------
+#
+# One block per entity platform for each physical sensor. `model` picks the field set. With
+# one station in range no `sensor_id` is needed; if a neighbour's station shows up too, take
+# your station's id from the log or the "Unknown Bresser devices" entity and add
+# `sensor_id: <id>` to every block.
+sensor:
+  - platform: bresser
+    model: bresser_7in1
+    device_id: dev_bresser
+    temperature:
+      name: "Temperature"
+    humidity:
+      name: "Humidity"
+    wind_speed:
+      name: "Wind Speed"
+    wind_gust:
+      name: "Wind Gust"
+    wind_direction:
+      name: "Wind Direction"
+    rain:
+      name: "Rain"
+    illuminance:
+      name: "Illuminance"
+    uv_index:
+      name: "UV Index"
+    rssi:
+      name: "Signal"
+
+binary_sensor:
+  - platform: bresser
+    model: bresser_7in1
+    device_id: dev_bresser
+    battery_low:
+      name: "Battery"
+    startup:
+      name: "Startup"
+    online:
+      name: "Online"
+
+text_sensor:
+  - platform: bresser
+    model: bresser_7in1
+    device_id: dev_bresser
+    last_seen:
+      name: "Last Seen"
+  # Belongs to the receiver: lists Bresser sensors in range that no block above claims.
+  - platform: bresser
+    unknown_devices:
+      name: "Unknown Bresser devices"

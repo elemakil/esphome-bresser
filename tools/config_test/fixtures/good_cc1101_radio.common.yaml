@@ -1,0 +1,39 @@
+# Replaces common.yaml for good_cc1101_radio.yaml: the same scaffold with a CC1101 in place
+# of the SX126x. It has to replace rather than extend, because the fixture's whole point is
+# that the *only* radio present is a CC1101 -- nothing else in the suite would notice if
+# radio_id silently accepted only an SX126x. It covers the config path only; the CC1101 C++
+# branch is compiled by tools/build_examples.sh (examples/esp32-s3-cc1101.yaml).
+#
+# Only the keys the schema requires are set; the full radio tuning lives in the example.
+esphome:
+  name: config-test
+  devices:
+    - id: dev_a
+      name: "Sub Device A"
+    - id: dev_b
+      name: "Sub Device B"
+
+esp32:
+  variant: esp32s3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+spi:
+  clk_pin: GPIO4
+  mosi_pin: GPIO5
+  miso_pin: GPIO6
+
+cc1101:
+  id: radio
+  cs_pin: GPIO7
+  gdo0_pin: GPIO2
+
+bresser:
+  id: hub
+  radio_id: radio

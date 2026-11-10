@@ -1,0 +1,18 @@
+# Two stations of the same model, told apart by sensor_id.
+sensor:
+  - platform: bresser
+    model: bresser_7in1
+    sensor_id: 12345
+    temperature:
+      name: "Station 1 Temperature"
+  - platform: bresser
+    model: bresser_7in1
+    sensor_id: 54321
+    temperature:
+      name: "Station 2 Temperature"
+binary_sensor:
+  - platform: bresser
+    model: bresser_7in1
+    sensor_id: 12345
+    online:
+      name: "Station 1 Online"
