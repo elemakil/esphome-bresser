@@ -32,7 +32,7 @@ tried on hardware here.
 |---|---|---|---|
 | Heltec WiFi LoRa 32 V3 | SX1262 | [`examples/heltec-wifi-lora-32-v3.yaml`](examples/heltec-wifi-lora-32-v3.yaml) | [hardware notes](docs/hardware/heltec-wifi-lora-32-v3.md) |
 | ESP32-S3 Super Mini + CC1101 breakout | CC1101 | [`examples/esp32-s3-cc1101.yaml`](examples/esp32-s3-cc1101.yaml) | [hardware notes](docs/hardware/esp32-s3-super-mini-cc1101.md) |
-| LILYGO TTGO LoRa32-OLED V2.1.6 (T3 V1.6.1), 868 MHz | SX1276 | [`examples/ttgo-lora32-v2-1-6.yaml`](examples/ttgo-lora32-v2-1-6.yaml) | not yet tested with a station; shows readings on the OLED |
+| LILYGO TTGO LoRa32-OLED V2.1.6 (T3 V1.6.1), 868 MHz | SX1276 | [`examples/ttgo-lora32-v2-1-6.yaml`](examples/ttgo-lora32-v2-1-6.yaml) | shows readings on the OLED; no signal strength (see [radio settings](docs/radio-settings.md)) |
 
 Any board with an ESPHome `sx126x`, `sx127x` or `cc1101` radio should work with the same radio
 settings; [docs/radio-settings.md](docs/radio-settings.md) explains them. All examples need
