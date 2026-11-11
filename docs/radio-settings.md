@@ -109,11 +109,11 @@ reach its magnitude target, so the slicer is less likely to emit near-random bit
 Wiring and board notes:
 [hardware/esp32-s3-super-mini-cc1101.md](hardware/esp32-s3-super-mini-cc1101.md).
 
-## SX127x
+## SX127x (validated on LILYGO TTGO LoRa32 V2.1.6)
 
-The same profile on the SX1276/SX1278 (ESPHome `sx127x`), as used in
-[`examples/ttgo-lora32-v2-1-6.yaml`](../examples/ttgo-lora32-v2-1-6.yaml). It has not yet been
-confirmed with a station; the values are carried over from the SX126x and CC1101 profiles.
+The same profile translated to the SX1276/SX1278's keys (ESPHome `sx127x`), validated on a
+LILYGO TTGO LoRa32-OLED V2.1.6 receiving the same station, as configured in
+[`examples/ttgo-lora32-v2-1-6.yaml`](../examples/ttgo-lora32-v2-1-6.yaml).
 
 | SX126x | SX127x | Notes |
 |---|---|---|
